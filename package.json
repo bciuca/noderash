@@ -1,0 +1,10 @@
+{
+  "name": "noderash",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+      "rpi-gpio": "*",
+      "rx": "*",
+      "underscore": "*"
+    }
+}
