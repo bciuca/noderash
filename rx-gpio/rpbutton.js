@@ -5,7 +5,7 @@ var Rx = require('rx'),
     //gpio = require('rpi-gpio');
 
     // Use this stub to test without a Raspberry Pi.
-    gpio = require('./gpio-stub').stub;
+    gpio = require('../test/gpio-stub').stub;
     
 RPiButton.UP = 'buttonup';
 RPiButton.DOWN = 'buttondown';
@@ -126,7 +126,7 @@ RPiButton.prototype.dispose = function() {
     // Cleanup and stop polling the pin.
     // Using Rx.Subject to trigger cleanup on observables
     // used in the instance.
-    console.log('RPiButton.dispose');
+    console.log('RPButton.dispose');
     this._disposed.onNext();
 };
 
