@@ -1,0 +1,24 @@
+{
+	"folders":
+	[
+		{
+			"file_exclude_patterns":
+			[
+				".project",
+				"*.sublime-project",
+				"*.sublime-workspace",
+				"*.gitignore"
+			],
+			"folder_exclude_patterns":
+			[
+				".settings",
+				".git"
+			],
+			"path": "./"
+		}
+	],
+	"settings":
+	{
+		"tab_size": 4
+	}
+}
