@@ -2,10 +2,10 @@ var Rx = require('rx'),
     Observable = Rx.Observable,
     EventEmitter = new require('events').EventEmitter,
     _ = require('underscore'),
-    //gpio = require('rpi-gpio');
+    gpio = require('rpi-gpio');
 
     // Use this stub to test without a Raspberry Pi.
-    gpio = require('../test/gpio-stub').stub;
+    //gpio = require('../test/gpio-stub').stub;
     
 RPiButton.UP = 'buttonup';
 RPiButton.DOWN = 'buttondown';

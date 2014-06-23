@@ -5,23 +5,25 @@ var Button = require('../rx-gpio/rpbutton'),
 
 console.log('testing stub');
 
-var btn = Button.create(11, true, 10000);
-btn.toObservable()
-    .take(1)
-    .subscribe(function(r) {
-        console.log('onNext', r);
-    }, function(e) {
-        console.log('onError', e);
-    }, function() {
-        console.log('onCompleted');
-        btn.dispose();
-        gpio.destroy();
-    });
+// The + end
+// GPIO 25 - pin 22
+// GPIO 17  - pin 11
+// var btn = Button.create(22, true);
+// btn.toObservable()
+//     .subscribe(function(r) {
+//         console.log('onNext read', r);
+//     }, function(e) {
+//         console.log('onError read', e);
+//     }, function() {
+//         console.log('onCompleted read');
+//         btn.dispose();
+//         gpio.destroy();
+//     });
 
-
-var led = LED.create(7);
+// Ground wire
+// GPIO 23 - pin 16
+var led = LED.create(16);
 led.set(true).toObservable()
-    .take(1)
     .subscribe(function(r) {
         console.log('led onNext', r);
     }, function(e) {
