@@ -1,6 +1,6 @@
 var Rx = require('rx'),
     Observable = Rx.Observable,
-    EventEmitter = new require('events').EventEmitter,
+    EventEmitter = require('events').EventEmitter,
     _ = require('underscore'),
     //gpio = require('rpi-gpio');
 
