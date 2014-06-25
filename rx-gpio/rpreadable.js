@@ -2,32 +2,36 @@ var Rx = require('rx'),
     Observable = Rx.Observable,
     EventEmitter = new require('events').EventEmitter,
     _ = require('underscore'),
-    gpio = require('rpi-gpio');
+    //gpio = require('rpi-gpio');
 
     // Use this stub to test without a Raspberry Pi.
-    //gpio = require('../test/gpio-stub').stub;
-    
-RPiButton.UP = 'buttonup';
-RPiButton.DOWN = 'buttondown';
-RPiButton.ERROR= 'error';
+    gpio = require('../test/gpio-stub').stub;
 
-function RPiButton(pin, initOnCreation, debounce) {
+// Constants - event names
+RPReadable.OPEN = 'pinopen';
+RPReadable.CLOSED = 'pinclosed';
+RPReadable.ERROR= 'error';
+
+// RPReadable extends EventEmitter
+_.extend(RPReadable.prototype, new EventEmitter());
+
+function RPReadable(pin) {
     // Constructor.
-    // Reads pin and determines whether the button is down
-    // or up. Option to use observables for chainable event
+    // Reads pin -- direction IN -- and determines whether the pin is closed
+    // or open. Option to use observables for chainable event
     // handling or other sequential logic flow.
     //
-    // Once the button is initialized, the pin will be read
+    // Once the pin is initialized, the pin will be read
     // continuously to listen for changes.
     // @param {Number} pin - the pin number to listen for.
-    // @param {Boolean} initOnCreation - init on instantiation.
     // @param {Integer} debounce - milliseconds to debounce 
     //   pin reading polling.
 
-    var _pin = this._pin = pin,
-        btnprev = true,
-        btncurr = true,
-        _pollDebounce = 10;
+    this._pin = pin;
+    this._debounceTime = 10;
+
+    var prevValue = true,
+        currValue = true;
     
     this._isStarted = false;
 
@@ -35,67 +39,49 @@ function RPiButton(pin, initOnCreation, debounce) {
     this._disposed = new Rx.Subject();
 
     this._disposed.subscribe(function() {
+        // Stop reading the pin.
         this._isStarted = false;
     }.bind(this));
 
-    _.extend(this, new EventEmitter());
-
-    // Set debounceTime setter/getter
-    Object.defineProperty(RPiButton.prototype, "debounceTime", {
-        get: function() {
-            return _pollDebounce;
-        },
-        set: function(val) {
-            _pollDebounce = val;
-        }
-    });
-
     // The instance observable. Merge all possible observables.
-    this._observable = Observable.fromEvent(this, RPiButton.UP)
-                            .merge(Observable.fromEvent(this, RPiButton.DOWN))
-                            .merge(Observable.fromEvent(this, RPiButton.ERROR))
+    this._observable = Observable.fromEvent(this, RPReadable.OPEN)
+                            .merge(Observable.fromEvent(this, RPReadable.CLOSED))
+                            .merge(Observable.fromEvent(this, RPReadable.ERROR))
                             .takeUntil(this._disposed);
 
     // Read the input of the pin recurively.
     // Debounce is setup incorrectly. Should probably fix this.
     this._readInput = _.debounce(function() {
-        gpio.read(_pin, function(err, value) {
+        gpio.read(this._pin, function(err, value) {
             var type;
 
             if (err) {
-                type = RPiButton.ERROR;
+                type = RPReadable.ERROR;
                this.emit(type, {type: type, value: new Error(err)});
                this._isStarted = false;
             } else {
-                btnprev = btncurr;
-                btncurr = value;
+                prevValue = currValue;
+                currValue = value;
 
-                if (btnprev !== btncurr) {
-                    type = btncurr ? RPiButton.UP : RPiButton.DOWN; 
+                if (prevValue !== currValue) {
+                    type = currValue ? RPReadable.OPEN : RPReadable.CLOSED; 
                     this.emit(type, {type: type, value: value});
                 }
                 this._isStarted && this._readInput();
             }
         }.bind(this));
     }.bind(this), this.debounceTime);
-
-    if (initOnCreation) {
-        this.initialize(debounce);
-    }
 }
 
-RPiButton.prototype.initialize = function(debounce) {
+RPReadable.prototype.initialize = function() {
     // Initialize the button and start reading the pin values.
-    //
-    if (debounce) {
-        this.debounceTime = debounce;
-    }
-
     this._isStarted = true;
     gpio.setup(this._pin, gpio.DIR_IN, this._readInput);
+
+    return this;
 };
 
-RPiButton.prototype.toObservable = function() {
+RPReadable.prototype.toObservable = function() {
     // Returns an observable.
     // @param (optional) - Event names to filter for.
     // @return {Rx.Observable}
@@ -107,7 +93,7 @@ RPiButton.prototype.toObservable = function() {
             } else {
                 // always listen for error
                 if (options.length === 1) {
-                    options.push(RPiButton.ERROR);
+                    options.push(RPReadable.ERROR);
                 }
                 return options.some(function(val) {
                     return ev.type === val;
@@ -122,18 +108,41 @@ RPiButton.prototype.toObservable = function() {
         });
 };
 
-RPiButton.prototype.dispose = function() {
+RPReadable.prototype.debugSubscribe = function() {
+    // Assign debug subscribe to print to console.
+    var pin = this._pin;
+    this.toObservable().subscribe(function(val) {
+        console.log('onNext read pin ' + pin + ':', val);
+    }, function(e) {
+        console.log('onError read pin ' + pin + ':', e);
+    }, function() {
+        console.log('onCompleted read pin', pin);
+        self.dispose();
+    });
+};
+
+RPReadable.prototype.dispose = function() {
     // Cleanup and stop polling the pin.
     // Using Rx.Subject to trigger cleanup on observables
     // used in the instance.
-    console.log('RPButton.dispose');
     this._disposed.onNext();
 };
 
-RPiButton.create = function(pin, initOnCreation, debounce) {
+RPReadable.create = function(pin, initOnCreation, debounce) {
     // Factory method.
-    // @return {RPiButton}
-    return new RPiButton(pin, initOnCreation, debounce);
+    // @return {RPReadable}
+    return new RPReadable(pin, initOnCreation, debounce);
 };
 
-module.exports = RPiButton;
+Object.defineProperty(RPReadable.prototype, "debounceTime", {
+    // Set debounceTime setter/getter
+    //
+    get: function() {
+        return this._debounceTime;
+    },
+    set: function(val) {
+        this._debounceTime = val;
+    }
+});
+
+module.exports = RPReadable;

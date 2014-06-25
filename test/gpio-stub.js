@@ -4,11 +4,8 @@ var bool = true;
 module.exports = {
     stub: {
         read: function(pin, callback) {
-            //callback(null, bool);
-
             setTimeout(function() {
                 bool = !bool;
-                console.log(bool);
                 callback(null, bool);
             }, 1000);
         },
