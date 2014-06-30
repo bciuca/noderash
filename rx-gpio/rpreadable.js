@@ -1,19 +1,12 @@
+'use strict';
+
 var Rx = require('rx'),
     Observable = Rx.Observable,
-    EventEmitter = require('events').EventEmitter,
     _ = require('underscore'),
     //gpio = require('rpi-gpio');
 
     // Use this stub to test without a Raspberry Pi.
     gpio = require('../test/gpio-stub').stub;
-
-// Constants - event names
-RPReadable.OPEN = 'pinopen';
-RPReadable.CLOSED = 'pinclosed';
-RPReadable.ERROR= 'error';
-
-// RPReadable extends EventEmitter
-_.extend(RPReadable.prototype, new EventEmitter());
 
 function RPReadable(pin) {
     // Constructor.
@@ -28,97 +21,71 @@ function RPReadable(pin) {
     //   pin reading polling.
 
     this._pin = pin;
-    this._debounceTime = 10;
+    this._debounceTime = 100;
+
+    this.id = _.uniqueId('RPReadable__');
 
     var prevValue = true,
         currValue = true;
-    
-    this._isStarted = false;
 
     // Trigger to dispose internal observable.
     this._disposed = new Rx.Subject();
+    this._togglePolling = new Rx.Subject();
 
-    this._disposed.subscribe(function() {
-        // Stop reading the pin.
-        this._isStarted = false;
-    }.bind(this));
-
-    // The instance observable. Merge all possible observables.
-    this._observable = Observable.fromEvent(this, RPReadable.OPEN)
-                            .merge(Observable.fromEvent(this, RPReadable.CLOSED))
-                            .merge(Observable.fromEvent(this, RPReadable.ERROR))
-                            .takeUntil(this._disposed);
-
-    // Read the input of the pin recurively.
-    // Debounce is setup incorrectly. Should probably fix this.
-    this._readInput = _.debounce(function() {
-        gpio.read(this._pin, function(err, value) {
-            var type;
-
-            if (err) {
-                type = RPReadable.ERROR;
-               this.emit(type, {type: type, value: new Error(err)});
-               this._isStarted = false;
-            } else {
-                prevValue = currValue;
-                currValue = value;
-
-                if (prevValue !== currValue) {
-                    type = currValue ? RPReadable.OPEN : RPReadable.CLOSED; 
-                    this.emit(type, {type: type, value: value});
-                }
-                this._isStarted && this._readInput();
-            }
-        }.bind(this));
-    }.bind(this), this.debounceTime);
+    gpio.setup(this._pin, gpio.DIR_IN);
 }
 
-RPReadable.prototype.initialize = function() {
-    // Initialize the button and start reading the pin values.
-    this._isStarted = true;
-    gpio.setup(this._pin, gpio.DIR_IN, this._readInput);
+RPReadable.prototype.changed = function() {
+    return Observable.create(function(observer) {
+        var isPolling = true;
+        var poll = _.debounce(function RPReadable_changed_poll() {
+            if (!isPolling) {
+                observer.onCompleted();
+                return;
+            }
 
-    return this;
-};
+            // Read the pin recursively.
+            gpio.read(this._pin, function(err, value) {
+                if (err) {
+                    observer.onError(err);
+                } else {
+                    this._prevValue = this._currValue;
+                    this._currValue = value;
+                    
+                    if (this._prevValue !== this._currValue) {
+                        observer.onNext(value);   
+                    }
 
-RPReadable.prototype.toObservable = function() {
-    // Returns an observable.
-    // @param (optional) - Event names to filter for.
-    // @return {Rx.Observable}
-    var options = arguments.length ? Array.prototype.slice.call(arguments) : [];
-    return this._observable
-        .filter(function(ev) {
-            if (options.length === 0) {
-                return true;
-            } else {
-                // always listen for error
-                if (options.length === 1) {
-                    options.push(RPReadable.ERROR);
+                    poll();
                 }
-                return options.some(function(val) {
-                    return ev.type === val;
-                });
-            }
-        })
-        .map(function(ev) {
-            if (ev.value instanceof Error) {
-                throw ev.value;
-            }
-            return ev && ev.value;
+            }.bind(this));
+        }.bind(this), this._debounceTime);
+
+        // Stop polling once instance is disposed.
+        this._disposed.onNext(function() {
+            isPolling = false;
         });
+
+        poll();
+
+        return function RPReadable_changed_poll_dispose() {
+            isPolling = false;
+        }.bind(this);
+    }.bind(this));
 };
 
-RPReadable.prototype.debugSubscribe = function() {
-    // Assign debug subscribe to print to console.
-    var pin = this._pin;
-    this.toObservable().subscribe(function(val) {
-        console.log('onNext read pin ' + pin + ':', val);
-    }, function(e) {
-        console.log('onError read pin ' + pin + ':', e);
-    }, function() {
-        console.log('onCompleted read pin', pin);
-        self.dispose();
-    });
+RPReadable.prototype.read = function() {
+    return Observable.create(function(observer) {
+        gpio.read(this._pin, function(err, value) {
+            if (err) {
+                observer.onError(err);
+            } else {
+                observer.onNext(value);
+            }
+        }.bind(this));
+
+        return function RPReadable_read_dispose() {};
+    }.bind(this));
 };
 
 RPReadable.prototype.dispose = function() {
@@ -128,10 +95,10 @@ RPReadable.prototype.dispose = function() {
     this._disposed.onNext();
 };
 
-RPReadable.create = function(pin, initOnCreation, debounce) {
+RPReadable.create = function(pin) {
     // Factory method.
     // @return {RPReadable}
-    return new RPReadable(pin, initOnCreation, debounce);
+    return new RPReadable(pin);
 };
 
 Object.defineProperty(RPReadable.prototype, "debounceTime", {
