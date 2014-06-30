@@ -94,7 +94,7 @@ RPReadable.prototype.changed = function() {
 
             return function RPReadable_changed_poll_dispose() {
                 isPolling = false;
-            }.bind(this);
+            };
         }.bind(this));
     }.bind(this));
 };
