@@ -54,48 +54,55 @@ function RPReadable(pin) {
 }
 
 RPReadable.prototype.changed = function() {
+    // Listen for changes on the pin. Observable fires
+    // only when the state changes (or on error).
+    // Read pin recursively at a debounced interval.
+    // @return {Rx.Observable}
+
     return this._init.flatMap(function() {
         return Observable.create(function(observer) {
-                var isPolling = true;
-                var poll = _.debounce(function RPReadable_changed_poll() {
-                    if (!isPolling) {
-                        observer.onCompleted();
-                        return;
-                    }
+            var isPolling = true;
+            var poll = _.debounce(function RPReadable_changed_poll() {
+                if (!isPolling) {
+                    observer.onCompleted();
+                    return;
+                }
 
-                    // Read the pin recursively.
-                    gpio.read(this._pin, function(err, value) {
-                        if (err) {
-                            observer.onError(err);
-                        } else {
-                            this._prevValue = this._currValue;
-                            this._currValue = value;
-                            
-                            if (this._prevValue !== this._currValue) {
-                                observer.onNext(value);   
-                            }
-
-                            poll();
+                // Read the pin recursively.
+                gpio.read(this._pin, function(err, value) {
+                    if (err) {
+                        observer.onError(err);
+                    } else {
+                        this._prevValue = this._currValue;
+                        this._currValue = value;
+                        
+                        if (this._prevValue !== this._currValue) {
+                            observer.onNext(value);   
                         }
-                    }.bind(this));
-                }.bind(this), this._debounceTime);
 
-                // Stop polling once instance is disposed.
-                this._disposed.onNext(function() {
-                    isPolling = false;
-                });
+                        poll();
+                    }
+                }.bind(this));
+            }.bind(this), this._debounceTime);
 
-                poll();
+            // Stop polling once instance is disposed.
+            this._disposed.onNext(function() {
+                isPolling = false;
+            });
 
-                return function RPReadable_changed_poll_dispose() {
-                    isPolling = false;
-                }.bind(this);
-            }.bind(this));
+            poll();
+
+            return function RPReadable_changed_poll_dispose() {
+                isPolling = false;
+            }.bind(this);
+        }.bind(this));
     }.bind(this));
 };
 
 RPReadable.prototype.read = function() {
     // Read the pin value once.
+    // @return {Rx.Observable}
+    
     return this._init.flatMap(function() {
         return Observable.create(function(observer) {
             gpio.read(this._pin, function(err, value) {
@@ -116,6 +123,7 @@ RPReadable.prototype.dispose = function() {
     // Cleanup and stop polling the pin.
     // Using Rx.Subject to trigger cleanup on observables
     // used in the instance.
+
     this._disposed.onNext();
     this._initialized = false;
     gpioUtils.cleanupPin(this._pin);
