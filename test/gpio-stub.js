@@ -1,26 +1,44 @@
 // Stub for testing without a Raspberry Pi.
-var bool = true;
+var bool = true,
+    pins = {},
+    _ = require('underscore');
+
+for (var i = 1; i <= 26; i++) {
+    pins[i] = {
+        id: i,
+        value: false
+    };
+}
+
 
 module.exports = {
     stub: {
         read: function(pin, callback) {
-            setTimeout(function() {
-                bool = !bool;
-                callback(null, bool);
+            var b = pins[pin].value = !pins[pin].value;
+            
+            pins[i].readHandle = setTimeout(function() {
+                callback(null, b)
             }, 1000);
         },
 
         write: function(pin, value, callback) {
-            setTimeout(function() {
-                callback(null);
-            }, 10);
+            pins[i].writeHandle = setTimeout(function() {
+                console.log('writing pin', pin, value);
+                pins[pin].value = value;
+                callback && callback(null);
+            }, 100);
         }, 
 
         setup: function(pin, dir, callback) {
-            callback && callback();
+            callback && setTimeout(callback, 100);
         },
 
-        destroy: function() { }
+        destroy: function() { 
+            pins.forEach(function(pin) {
+                pin.readHandle && clearTimeout(pin.readHandle);
+                pin.writeHandle && clearTimeout(pin.writeHandle);
+            });
+        }
     },
 
     stubError: {
