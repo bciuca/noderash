@@ -1,7 +1,8 @@
 // Stub for testing without a Raspberry Pi.
 var bool = true,
     pins = {},
-    _ = require('underscore');
+    _ = require('underscore'),
+    initialized = false;
 
 for (var i = 1; i <= 26; i++) {
     pins[i] = {
@@ -14,15 +15,24 @@ for (var i = 1; i <= 26; i++) {
 module.exports = {
     stub: {
         read: function(pin, callback) {
+            if (!initialized) {
+                callback && callback('Not initialized.', null);
+                return;
+            }
             var b = pins[pin].value = !pins[pin].value;
             
-            pins[i].readHandle = setTimeout(function() {
+            pins[pin].readHandle = setTimeout(function() {
                 callback(null, b)
             }, 1000);
         },
 
         write: function(pin, value, callback) {
-            pins[i].writeHandle = setTimeout(function() {
+            if (!initialized) {
+                callback && callback('Not initialized.', null);
+                return;
+            }
+
+            pins[pin].writeHandle = setTimeout(function() {
                 console.log('writing pin', pin, value);
                 pins[pin].value = value;
                 callback && callback(null);
@@ -30,6 +40,7 @@ module.exports = {
         }, 
 
         setup: function(pin, dir, callback) {
+            initialized = true;
             callback && setTimeout(callback, 100);
         },
 
@@ -38,6 +49,7 @@ module.exports = {
                 pin.readHandle && clearTimeout(pin.readHandle);
                 pin.writeHandle && clearTimeout(pin.writeHandle);
             });
+            initialized = false;
         }
     },
 
