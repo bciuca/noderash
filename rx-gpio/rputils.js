@@ -1,7 +1,6 @@
 'use strict';
 
 var fs = require('fs');
-var _ = require('underscore');
 
 // GPIO to physical pin mapping (mappings are rev B of raspberry pi)
 var g2p = {
@@ -34,6 +33,7 @@ Object.freeze(g2p);
 function cleanupPin(pin, cb) {
     // Unwatch a pin.
     // Swiped from rpi-gpio private method (it's mines now bitch).
+
     fs.unwatchFile(PATH + '/gpio' + pin + '/value');
     fs.writeFile(PATH + '/unexport', pin, function(err) {
         if (cb) return cb(err);
@@ -44,6 +44,7 @@ function getHardwareProfile() {
     // Returns hardware profile object of platform
     // as reported by /proc/cpuinfo
     // Return null if system call is not supported.
+
     if (hardwareProfile) {
         return hardwareProfile;
     }
@@ -74,9 +75,10 @@ function getHardwareProfile() {
 
 function isRasPi() {
     // Try and guesss if this is a Raspberry Pi or not.
-    // Works on Raspian Linux and rev B of the Pi (not test on others).
+    // Works on Raspian Linux and hardware rev B of the Pi.
     // Hardware name of the SoC family/implementation name used in Raspberry Pi.
     // http://raspberrypi.stackexchange.com/questions/840/why-is-the-cpu-sometimes-referred-to-as-bcm2708-sometimes-bcm2835
+
     var profile = getHardwareProfile() || {};
     return (profile.hardware === 'BCM2708' || profile.hardware === 'BCM2835')
         && profile.revision !== undefined
