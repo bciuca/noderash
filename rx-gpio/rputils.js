@@ -26,7 +26,7 @@ var g2p = {
 
 // GPIO file path.
 var PATH = '/sys/class/gpio';
-var hardware = null;
+var hardwareProfile = null;
 
 // Ice to meet you.
 Object.freeze(g2p);
@@ -41,46 +41,63 @@ function cleanupPin(pin, cb) {
 }
 
 function getHardwareProfile() {
-    if (hardware) {
-        return hardware;
+    // Returns hardware profile object of platform
+    // as reported by /proc/cpuinfo
+    // Return null if system call is not supported.
+    if (hardwareProfile) {
+        return hardwareProfile;
     }
 
     try {
-        hardware = {};
         var hwString = fs.readFileSync('/proc/cpuinfo', 'utf-8');
         hwString = hwString.replace(/\t/g, '').replace(/\n/g, ',').split(',');
+        hardwareProfile = {};
         hwString.forEach(function(str) {
             var opt = str.split(':');
-            if (!opt[0]) return;
-            hardware[opt[0].toLowerCase()] = opt[1];
+            var key = opy[0];
+
+            if (!key) return;
+
+            // Camel case the long string.
+            var list = key.toLowerCase().split(' ');
+            key = list.reduce(function(prev, curr) {
+                return prev + curr.charAt(0).toUpperCase() + curr.substr(1).toLowerCase();
+            });
+
+            hardwareProfile[key] = opt[1];
         });
     } catch (err) {
-        return hardware;
+        hardwareProfile = null;
+        return null;
     }
 }
 
 function isRasPi() {
     // Try and guesss if this is a Raspberry Pi or not.
-    if (getHardwareProfile()) {
-        // Guess CPU info
-        // http://raspberrypi.stackexchange.com/questions/840/why-is-the-cpu-sometimes-referred-to-as-bcm2708-sometimes-bcm2835
-        return (hardware.hardware === 'BCM2708' || hardware.hardware === 'BCM2835')
-            && hardware.revision !== undefined
-            && hardware.serial !== undefined;
-    } else {
-        return process.arch === 'arm' && process.platform === 'linux';
-    }
+    // Works on Raspian Linux and rev B of the Pi (not test on others).
+    // Hardware name of the SoC family/implementation name used in Raspberry Pi.
+    // http://raspberrypi.stackexchange.com/questions/840/why-is-the-cpu-sometimes-referred-to-as-bcm2708-sometimes-bcm2835
+    var profile = getHardwareProfile() || {};
+    return (profile.hardware === 'BCM2708' || profile.hardware === 'BCM2835')
+        && profile.revision !== undefined
+        && profile.serial !== undefined;
 }
 
 function getGpioLib() {
-    // Run Raspberry Pi code if environment variable RPI is set to prod.
+    // Run Raspberry Pi code if environment variable RPI is set to native.
     // If environment variable is not set, then take a crappy guess by 
     // seeing what the platform and cpu is. (linux and arm gets you pi).
+    //
+    // Default to running the rp-gpio lib if hardware is a Pi.
     // 
     // If Environment is set to 'test' or on a non-pi hardware, then run
     // the stub gpio shim for testing.
+    //
+    // Environment variable RPI: 
+    //       native - run rp-gpio library.
+    //       test - run gpio shim library.
         
-    return process.env.RPI === 'prod' || (isRasPi() && process.env.RPI !== 'test')
+    return process.env.RPI === 'native' || (isRasPi() && process.env.RPI !== 'test')
         ? require('rpi-gpio')
         : require('../test/gpio-stub').stub;
 }
