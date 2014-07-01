@@ -58,6 +58,7 @@ function getHardwareProfile() {
         hwString.forEach(function(str) {
             var opt = str.split(':');
             var key = opt[0];
+            var val = opt[1];
 
             if (!key) return;
 
@@ -67,7 +68,7 @@ function getHardwareProfile() {
                 return prev + curr.charAt(0).toUpperCase() + curr.substr(1).toLowerCase();
             });
 
-            hardwareProfile[key] = opt[1];
+            hardwareProfile[key] = val ? val.trim() : null;
         });
 
         return hardwareProfile;
