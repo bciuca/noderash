@@ -53,13 +53,15 @@ function getHardwareProfile() {
         var hwString = fs.readFileSync('/proc/cpuinfo', 'utf-8');
         hwString = hwString.replace(/\t/g, '').replace(/\n/g, ',').split(',');
         hardwareProfile = {};
+
+        // Parse string to object.
         hwString.forEach(function(str) {
             var opt = str.split(':');
-            var key = opy[0];
+            var key = opt[0];
 
             if (!key) return;
 
-            // Camel case the long string.
+            // Camel case space seperated strings.
             var list = key.toLowerCase().split(' ');
             key = list.reduce(function(prev, curr) {
                 return prev + curr.charAt(0).toUpperCase() + curr.substr(1).toLowerCase();
@@ -67,7 +69,10 @@ function getHardwareProfile() {
 
             hardwareProfile[key] = opt[1];
         });
+
+        return hardwareProfile;
     } catch (err) {
+        console.error('Error getting profile:', err);
         hardwareProfile = null;
         return null;
     }
