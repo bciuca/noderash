@@ -60,7 +60,7 @@ RPWriteable.prototype.setValue = function(value) {
 
     return this._init.flatMap(function() {
         return Observable.create(function(observer) {
-            gpio.write(pin, value, function(err) {
+            gpio.write(this._pin, value, function(err) {
                 if (err) {
                     observer.onError(err);
                 } else {
@@ -68,12 +68,12 @@ RPWriteable.prototype.setValue = function(value) {
                     observer.onNext(value);
                     observer.onCompleted();
                 }
-            });
+            }.bind(this));
 
             // noop dispose
             return function() {};
-        });
-    });
+        }.bind(this));
+    }.bind(this));
 };
 
 
