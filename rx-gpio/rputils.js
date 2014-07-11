@@ -1,6 +1,7 @@
 'use strict';
 
 var fs = require('fs');
+var _ = require('underscore');
 
 // GPIO to physical pin mapping (mappings are rev B of raspberry pi)
 var g2p = {
@@ -39,6 +40,17 @@ function cleanupPin(pin, cb) {
         if (cb) return cb(err);
     });
 }
+
+function cleanupAll(cb) {
+    var cbs = [];
+    _.each(g2p, function(pin) {
+        var func = (function(p) { 
+            return function() { return p;};
+        })(pin);
+        cbs.push(func);
+        cleanupPin(pin, func);
+    });
+} 
 
 function getHardwareProfile() {
     // Returns hardware profile object of platform
