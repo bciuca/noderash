@@ -53,10 +53,15 @@ RPWriteable.prototype.getValue = function() {
     return Observable.return(this._pinValue);
 };
 
-RPWriteable.prototype.setValue = function(value) {
+RPWriteable.prototype.setValue = function(value, force) {
     // Set the LED on or off.
     // @param {Boolean} value - 
+    // @param {Boolean} force - force write the value. Default is false.
     // @return {RPWriteable}
+
+    if (this._pinValue === value && !force) {
+        return Rx.Observable.return(this._pinValue);
+    }
 
     return this._init.flatMap(function() {
         return Observable.create(function(observer) {
@@ -74,6 +79,11 @@ RPWriteable.prototype.setValue = function(value) {
             return function() {};
         }.bind(this));
     }.bind(this));
+};
+
+RPWriteable.prototype.toggle = function() {
+    console.log('toggle from', this._pinValue, 'to', !this._pinValue);
+    return this.setValue(!this._pinValue);
 };
 
 
