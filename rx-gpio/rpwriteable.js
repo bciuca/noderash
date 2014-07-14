@@ -7,7 +7,7 @@ var Rx = require('rx'),
     _ = require('underscore'),
     gpio = gpioUtils.getGpioLib();
 
-function RPWriteable(pin) {
+function RPWriteable() {
     // Constructor.
     // Writes to pin -- pin direction OUT (turn on LEDs and stuff).
     // Extends EventEmitter.
@@ -17,13 +17,17 @@ function RPWriteable(pin) {
     //
     // @param {Integer} pin - the physical pin to listen for.
     //
-    
+
     this._pin = pin;
     this._initialized = false;
     this._pinValue = undefined;
 
     // Trigger to dispose internal observable.
     this._disposed = new Rx.Subject();
+}
+
+RPWriteable.prototype.init = function(pin) {
+    this._pin = pin;
 
     // Lazy initialization. Init only when need to write the pin.
     this._init = Observable.create(function(observer) {
@@ -36,16 +40,16 @@ function RPWriteable(pin) {
                     this._initialized = true;
                     observer.onNext(true);
                     observer.onCompleted();
-                }.bind(this));    
+                }.bind(this));
             } catch (err) {
                 observer.onError(err);
             }
         }
-        
+
         // noop dispose
         return function() {}
     }.bind(this));
-}
+};
 
 RPWriteable.prototype.getValue = function() {
     // Read the pin

@@ -30,6 +30,10 @@ function RPReadable(pin) {
     // Trigger to dispose internal observable.
     this._disposed = new Rx.Subject();
     this._togglePolling = new Rx.Subject();
+}
+
+RPReadable.prototype.init = function(pin) {
+    this._pin = pin;
 
     // Lazy initialization. Init only when need to read the pin.
     this._init = Observable.create(function(observer) {
@@ -42,18 +46,19 @@ function RPReadable(pin) {
                     this._initialized = true;
                     observer.onNext(true);
                     observer.onCompleted();
-                }.bind(this));    
+                }.bind(this));
             } catch (err) {
                 observer.onError(err);
             }
         }
-        
+
         // noop dispose
         return function() {}
     }.bind(this));
-}
+};
 
 RPReadable.prototype.changed = function() {
+    console.log('rpreadable changed');
     // Listen for changes on the pin. Observable fires
     // only when the state changes (or on error).
     // Read pin recursively at a debounced interval.
@@ -96,7 +101,8 @@ RPReadable.prototype.changed = function() {
                 isPolling = false;
             };
         }.bind(this));
-    }.bind(this));
+    }.bind(this))
+    .share();
 };
 
 RPReadable.prototype.read = function() {
