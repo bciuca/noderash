@@ -14,7 +14,7 @@ RPSwitchPanel.initialize({
     },
 
     bigRedButtonAction: function() {
-        console.log('BOOOOM!!!');
+        console.log('Should do something cool here.');
     }
 });
 
