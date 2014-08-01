@@ -74,9 +74,11 @@ function initialize(config) {
 
     toggleSwitch.closed()
         .doAction(toggleSwitchAction)
-        .flatMap(function() {
+        .doAction(function() {
             // reset the push count
             pushCount = 0;
+        })
+        .flatMap(function() {
             return bigRedButton.activate();
         })
         .subscribe(function(val) {
