@@ -1,13 +1,6 @@
 'use strict';
 
-var RPSwitch = require('../rx-gpio/rpswitch'),
-    RPToggleSwitch = require('../rx-gpio/rplightedtoggleswitch'),
-    RPLED = require('../rx-gpio/rpled'),
-    RPBigRedButton = require('../rx-gpio/rpbigredbutton'),
-    RPSwitchPanel = require('../rx-gpio/rpswitchpanel'),
-    utils = require('../rx-gpio/rputils'),
-    g2p = utils.gpioToPinMapping,
-    Rx = require('rx');
+var RPSwitchPanel = require('../rx-gpio/rpswitchpanel');
 
 console.log('Testing stub ...');
 
