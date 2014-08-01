@@ -1,6 +1,8 @@
 /**
  * Created by bogdan on 7/13/14.
  */
+ 'use strict';
+ 
 var RPButton = require('./rpbutton');
 var RPLightedToggleSwitch = require('./rplightedtoggleswitch');
 var RPLED = require('./rpled');
