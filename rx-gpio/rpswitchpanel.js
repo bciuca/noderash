@@ -15,7 +15,7 @@ var RPSwitch = require('../rx-gpio/rpswitch'),
 
 function log() {
     if (debug) {
-        log.apply(console, arguments);
+        console.log.apply(console, arguments);
     }
 }
 
