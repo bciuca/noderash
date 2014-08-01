@@ -27,4 +27,3 @@ var killMe = function() {
 };
 
 process.on('SIGINT', killMe);
-process.on('SIGTERM', killMe);
