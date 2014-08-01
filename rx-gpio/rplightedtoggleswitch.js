@@ -11,12 +11,16 @@ function activate(instance, isActive) {
     }
 
     if (isActive) {
-        return Rx.Observable.timer(10)
+        // Add a delay for issue with writing to pin immediately.
+        Rx.Observable.timer(10)
             .flatMap(function() {
-                return instance._led.blinkFor(50, 5).doAction(function() {
-                    instance._activated = true;
-                });
-            });
+                return instance._led.blinkFor(50, 5);
+            })
+            .doAction(function() {
+                instance._activated = true;
+            })
+            .subscribe();
+        return Rx.Observable.return(instance._activated);
     } else {
         return instance._led.off().doAction(function() {
             instance._activated = false;
