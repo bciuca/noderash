@@ -4,12 +4,9 @@ var Rx = require('rx');
 RPLED.prototype = new RPWriteable();
 
 function RPLED(pin, onValue) {
-    console.log('RPLED ', pin, onValue);
     RPWriteable.prototype.init.call(this, pin);
     this._onValue = onValue === undefined ? true : onValue;
     this._offValue = !this._onValue;
-
-    console.log('on value is ', this._onValue, this._offValue);
 
     this._isBlinking = false;
     this._blinkMutex = new Rx.Subject();
@@ -28,7 +25,6 @@ RPLED.prototype.toggle = function() {
 };
 
 RPLED.prototype.blinkOn = function(rate) {
-    console.log('blinkOn', this._isBlinking);
     if (this._isBlinking) {
         throw new Error('Already blinking. Try stopping first.');
     }
@@ -37,14 +33,15 @@ RPLED.prototype.blinkOn = function(rate) {
 
     return Rx.Observable.timer(1)
         .flatMap(function() {
-            this._isBlinking = true;
-
             return Rx.Observable.interval(rate)
                 .takeUntil(this._blinkMutex)
                 .flatMap(function() {
                     return this.toggle();
                 }.bind(this));
-        }.bind(this));
+        }.bind(this))
+        .doAction(function() {
+            this._isBlinking = true;
+        });
 };
 
 RPLED.prototype.blinkOff = function() {
@@ -52,15 +49,19 @@ RPLED.prototype.blinkOff = function() {
         .doAction(function() {
             this._blinkMutex.onNext();
             this._isBlinking = false;
-            console.log('blinky is now false');
         }.bind(this))
         .flatMap(function() {
-            console.log('now that blinky is doen, turn dat shitz off');
             return this.off();
         }.bind(this));
 };
 
 RPLED.prototype.blinkFor = function(rate, count, onOrOff) {
+    // Blinks the led for a number of times at a specified rate.
+    // @param rate - the rate in ms at which to blink the led
+    // @param count - the number of cycles to blink
+    // @param onOrOff - 'on' to leave the led on after the cycle, 
+    //                  or 'off' to turn off.
+    // @return Rx.Observable
     count = count || 5;
     onOrOff = onOrOff || 'on';
 
@@ -76,7 +77,10 @@ RPLED.prototype.blinkFor = function(rate, count, onOrOff) {
         return current < count;
     })
     .concat(this.blinkOff())
-    .concat(this[onOrOff]());
+    .concat(this[onOrOff]())
+    .reduce(function(acc) {
+        return acc;
+    });
 };
 
 

@@ -17,8 +17,6 @@ function RPWriteable() {
     //
     // @param {Integer} pin - the physical pin to listen for.
     //
-
-    this._pin = pin;
     this._initialized = false;
     this._pinValue = undefined;
 
@@ -86,7 +84,6 @@ RPWriteable.prototype.setValue = function(value, force) {
 };
 
 RPWriteable.prototype.toggle = function() {
-    console.log('toggle from', this._pinValue, 'to', !this._pinValue);
     return this.setValue(!this._pinValue);
 };
 

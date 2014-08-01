@@ -19,9 +19,10 @@ var toggleSwitch = RPToggleSwitch.create(G_TGL, G_TGLED);
 var bigRedButton = RPBigRedButton.create(G_BR, G_BRLED);
 
 keySwitch.closed()
-    .flatMap(function() {
+    .map(function() {
         return toggleSwitch.activate();
     })
+    .switch()
     .subscribe(function(val) {
         console.log('onNext key switch is ON');
     }, function(e) {
@@ -47,6 +48,7 @@ keySwitch.open()
 
 toggleSwitch.closed()
     .flatMap(function() {
+        console.log('activate red button');
         return bigRedButton.activate();
     })
     .subscribe(function(val) {

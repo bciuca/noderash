@@ -58,7 +58,6 @@ RPReadable.prototype.init = function(pin) {
 };
 
 RPReadable.prototype.changed = function() {
-    console.log('rpreadable changed');
     // Listen for changes on the pin. Observable fires
     // only when the state changes (or on error).
     // Read pin recursively at a debounced interval.

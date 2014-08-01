@@ -14,7 +14,6 @@ function activate(instance, isActive) {
         return Rx.Observable.timer(10)
             .flatMap(function() {
                 return instance._led.blinkFor(50, 5).doAction(function() {
-                    console.log('blinking for');
                     instance._activated = true;
                 });
             });
@@ -36,7 +35,6 @@ RPLightedToggleSwitch.prototype.init = function(switchPin, ledPin) {
 };
 
 RPLightedToggleSwitch.prototype.activate = function() {
-    console.log('activate, ', this._activated);
     return activate(this, true);
 };
 
@@ -47,18 +45,11 @@ RPLightedToggleSwitch.prototype.deactivate = function() {
 RPLightedToggleSwitch.prototype.closed = function() {
     return this._switch.closed()
         .doAction(function() {
-            console.log('switch is on, is activated?', this._activated);
         }.bind(this))
         .filter(function() {
             return this._activated;
         }.bind(this))
-        .doAction(function() {
-            console.log('switch is on, should blinky blink dat shit');
-        })
-        .concat(this._led.blinkOn(250))
-        .doAction(function() {
-            console.log('\n\n                              BLINKY');
-        })
+        .concat(this._led.blinkOn(250));
 };
 
 RPLightedToggleSwitch.prototype.open = function() {
