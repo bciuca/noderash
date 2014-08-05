@@ -33,11 +33,17 @@ RPWriteable.prototype.init = function(pin) {
             observer.onNext(true);
             observer.onCompleted();
         } else {
+            var exported = function() {
+                console.log('pin has export');
+                observer.onNext(true);
+                observer.onCompleted();
+            };
+
             try {
                 gpio.setup(this._pin, gpio.DIR_OUT, function() {
                     this._initialized = true;
-                    observer.onNext(true);
-                    observer.onCompleted();
+                    console.log('add export handler');
+                    gpio.once('export', exported);
                 }.bind(this));
             } catch (err) {
                 observer.onError(err);
@@ -45,7 +51,7 @@ RPWriteable.prototype.init = function(pin) {
         }
 
         // noop dispose
-        return function() {}
+        return function() { }
     }.bind(this));
 };
 
@@ -65,22 +71,22 @@ RPWriteable.prototype.setValue = function(value, force) {
         return Rx.Observable.return(this._pinValue);
     }
 
-    return this._init.flatMap(function() {
-        return Observable.create(function(observer) {
-            gpio.write(this._pin, value, function(err) {
-                if (err) {
-                    observer.onError(err);
-                } else {
-                    this._pinValue = value;
-                    observer.onNext(value);
-                    observer.onCompleted();
-                }
-            }.bind(this));
+    var writeObservable = Rx.Observable.create(function(observer) {
+        gpio.write(this._pin, value, function(err) {
+            if (err) {
+                observer.onError(err);
+            } else {
+                this._pinValue = value;
+                observer.onNext(value);
+                observer.onCompleted();
+            }
+        }.bind(this));
 
             // noop dispose
-            return function() {};
-        }.bind(this));
+        return function() {};
     }.bind(this));
+
+    return Rx.Observable.concat(this._init, writeObservable);
 };
 
 RPWriteable.prototype.toggle = function() {

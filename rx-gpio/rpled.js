@@ -1,3 +1,5 @@
+'use strict';
+
 var RPWriteable = require('./rpwriteable');
 var Rx = require('rx');
 
@@ -41,7 +43,7 @@ RPLED.prototype.blinkOn = function(rate) {
         }.bind(this))
         .doAction(function() {
             this._isBlinking = true;
-        });
+        }.bind(this));
 };
 
 RPLED.prototype.blinkOff = function() {
@@ -73,11 +75,13 @@ RPLED.prototype.blinkFor = function(rate, count, onOrOff) {
             }
         }.bind(this));
 
-    return blinky.takeWhile(function() {
-        return current < count;
-    })
-    .concat(this.blinkOff())
-    .concat(this[onOrOff]())
+    return Rx.Observable.concat(
+        blinky.takeWhile(function() {
+            return current < count;
+        }),
+        this.blinkOff(),
+        this[onOrOff]()
+    )
     .reduce(function(acc) {
         return acc;
     });

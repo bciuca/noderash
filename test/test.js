@@ -1,6 +1,7 @@
 'use strict';
 
-var RPSwitchPanel = require('../rx-gpio/rpswitchpanel');
+var RPSwitchPanel = require('../rx-gpio/rpswitchpanel'),
+    noop = function() {};
 
 console.log('Testing stub ...');
 
@@ -21,7 +22,7 @@ RPSwitchPanel.initialize({
 // Kill everything here.
 var killMe = function() {
     RPSwitchPanel.dispose()
-        .subscribe(function() {
+        .subscribe(noop, noop, function() {
             process.exit();
         });
 };

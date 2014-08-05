@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var _ = require('underscore');
+var Rx = require('rx');
 
 // GPIO to physical pin mapping (mappings are rev B of raspberry pi)
 var g2p = {
@@ -50,7 +51,22 @@ function cleanupAll(cb) {
         cbs.push(func);
         cleanupPin(pin, func);
     });
-} 
+}
+
+function releaseGpio() {
+    return Rx.Observable.create(function(observer) {
+        cleanupAll(function() {
+            var gpio = getGpioLib();
+            gpio.dispose(function() {
+                observer.onNext();
+                observer.onCompleted();
+            });
+        })
+
+        // noop dispose - called onCompleted
+        return function() {};
+    });
+}
 
 function getHardwareProfile() {
     // Returns hardware profile object of platform
@@ -127,5 +143,6 @@ module.exports = {
     gpioToPinMapping: g2p,
     cleanupPin: cleanupPin,
     getHardwareProfile: getHardwareProfile,
-    isRasPi: isRasPi
+    isRasPi: isRasPi,
+    releaseGpio: releaseGpio
 };
