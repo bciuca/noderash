@@ -49,7 +49,7 @@ RPWriteable.prototype.setValue = function(value, force) {
     }
 
     var writeObservable = Rx.Observable.create(function(observer) {
-        gpio.write(value, function(err) {
+        this._pin.write(value, function(err) {
             if (err) {
                 observer.onError(err);
             } else {
@@ -67,7 +67,7 @@ RPWriteable.prototype.setValue = function(value, force) {
 };
 
 RPWriteable.prototype.toggle = function() {
-    return this.setValue(!this._pinValue);
+    return this.setValue(this._pinValue === 0 ? 1 : 0);
 };
 
 
@@ -77,7 +77,7 @@ RPWriteable.prototype.dispose = function() {
     // used in the instance.
     this._disposed.onNext();
     this._initialized = false;
-    gpioUtils.cleanupPin(this._pin);
+    this._pin.unexport();
 };
 
 RPWriteable.create = function(pin) {
