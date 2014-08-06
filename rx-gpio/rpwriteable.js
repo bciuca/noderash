@@ -24,7 +24,7 @@ function RPWriteable(pin) {
     this._disposed = new Rx.Subject();
 
     if (pin != undefined) {
-        init(pin);
+        this.init(pin);
     }
 }
 

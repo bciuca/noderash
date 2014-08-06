@@ -2,7 +2,17 @@
 
 var RPWriteable = require('../rx-gpio/rpwriteable');
 
-RPWriteable.create(24)
+RPWriteable.create(24).setValue(1).subscribe(function(val) {
+    console.log('next', val);
+},
+
+function(err) {
+    console.log('error', err);
+}, 
+
+function() {
+    console.log('done');
+});
 
 // var RPSwitchPanel = require('../rx-gpio/rpswitchpanel'),
 //     noop = function() {};
