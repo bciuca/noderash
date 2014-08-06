@@ -134,7 +134,7 @@ function getGpioLib() {
     //       test - run gpio shim library.
         
     return process.env.RPI === 'native' || (isRasPi() && process.env.RPI !== 'test')
-        ? require('rpi-gpio')
+        ? require('onoff').gpio
         : require('../test/gpio-stub').stub;
 }
 

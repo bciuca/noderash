@@ -1,30 +1,34 @@
 'use strict';
 
-var RPSwitchPanel = require('../rx-gpio/rpswitchpanel'),
-    noop = function() {};
+var RPWriteable = require('../rx-gpio/rpwriteable');
 
-console.log('Testing stub ...');
+RPWriteable.create(24)
 
-RPSwitchPanel.initialize({
-    keySwitchAction: function(v) {
-        console.log('key switch', v);
-    },
+// var RPSwitchPanel = require('../rx-gpio/rpswitchpanel'),
+//     noop = function() {};
 
-    toggleSwitchAction: function(v) {
-        console.log('toggle switch', v);
-    },
+// console.log('Testing stub ...');
 
-    bigRedButtonAction: function() {
-        console.log('Should do something cool here.');
-    }
-});
+// RPSwitchPanel.initialize({
+//     keySwitchAction: function(v) {
+//         console.log('key switch', v);
+//     },
 
-// Kill everything here.
-var killMe = function() {
-    RPSwitchPanel.dispose()
-        .subscribe(noop, noop, function() {
-            process.exit();
-        });
-};
+//     toggleSwitchAction: function(v) {
+//         console.log('toggle switch', v);
+//     },
 
-process.on('SIGINT', killMe);
+//     bigRedButtonAction: function() {
+//         console.log('Should do something cool here.');
+//     }
+// });
+
+// // Kill everything here.
+// var killMe = function() {
+//     RPSwitchPanel.dispose()
+//         .subscribe(noop, noop, function() {
+//             process.exit();
+//         });
+// };
+
+// process.on('SIGINT', killMe);

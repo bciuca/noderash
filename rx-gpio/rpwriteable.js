@@ -7,7 +7,7 @@ var Rx = require('rx'),
     _ = require('underscore'),
     gpio = gpioUtils.getGpioLib();
 
-function RPWriteable() {
+function RPWriteable(pin) {
     // Constructor.
     // Writes to pin -- pin direction OUT (turn on LEDs and stuff).
     // Extends EventEmitter.
@@ -22,37 +22,14 @@ function RPWriteable() {
 
     // Trigger to dispose internal observable.
     this._disposed = new Rx.Subject();
+
+    if (pin != undefined) {
+        init(pin);
+    }
 }
 
 RPWriteable.prototype.init = function(pin) {
-    this._pin = pin;
-
-    // Lazy initialization. Init only when need to write the pin.
-    this._init = Observable.create(function(observer) {
-        if (this._initialized) {
-            observer.onNext(true);
-            observer.onCompleted();
-        } else {
-            var exported = function() {
-                console.log('pin has export');
-                observer.onNext(true);
-                observer.onCompleted();
-            };
-
-            try {
-                gpio.setup(this._pin, gpio.DIR_OUT, function() {
-                    this._initialized = true;
-                    console.log('add export handler');
-                    gpio.once('export', exported);
-                }.bind(this));
-            } catch (err) {
-                observer.onError(err);
-            }
-        }
-
-        // noop dispose
-        return function() { }
-    }.bind(this));
+    this._pin = new gpio(pin, 'out');
 };
 
 RPWriteable.prototype.getValue = function() {
@@ -72,7 +49,7 @@ RPWriteable.prototype.setValue = function(value, force) {
     }
 
     var writeObservable = Rx.Observable.create(function(observer) {
-        gpio.write(this._pin, value, function(err) {
+        gpio.write(value, function(err) {
             if (err) {
                 observer.onError(err);
             } else {
