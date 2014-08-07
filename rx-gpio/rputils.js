@@ -32,6 +32,24 @@ var hardwareProfile = null;
 // Ice to meet you.
 Object.freeze(g2p);
 
+function rxify(func, thisArg, final, args) {
+    args = args || [];
+    final = final === true;
+
+    return Rx.Observable.create(function(observer) {
+        args = args.concat(function(err, val) {
+            if (err) {
+                observer.onError(err);
+            } else {
+                observer.onNext(val);
+                final && observer.onCompleted();
+            }
+        });
+        func.apply(thisArg, args);
+        return function() {};
+    });
+}
+
 function cleanupPin(pin, cb) {
     // Unwatch a pin.
     // Swiped from rpi-gpio private method (it's mines now bitch).
@@ -134,8 +152,22 @@ function getGpioLib() {
     //       test - run gpio shim library.
         
     return process.env.RPI === 'native' || (isRasPi() && process.env.RPI !== 'test')
-        ? require('onoff').gpio
+        ? require('onoff').Gpio
         : require('../test/gpio-stub').stub;
+}
+
+function defineClass(constructor, prototypeMembers, staticMembers) {
+    constructor.prototype = prototypeMembers;
+    _.extend(constructor, staticMembers);
+    return constructor;
+}
+
+function extendClass(baseClass, baseClassArgs, constructor, prototypeMembers, staticMembers) {
+    baseClassArgs = baseClassArgs || [];
+    constructor.prototype = new baseClass.bind.apply(baseClass, baseClassArgs);
+    _.extend(constructor.prototype, prototypeMembers);
+    _.extend(constructor, staticMembers);
+    return constructor;
 }
 
 module.exports = {
@@ -144,5 +176,10 @@ module.exports = {
     cleanupPin: cleanupPin,
     getHardwareProfile: getHardwareProfile,
     isRasPi: isRasPi,
-    releaseGpio: releaseGpio
+    releaseGpio: releaseGpio,
+    rxify: rxify,
+    Class: {
+        define: defineClass,
+        extend: extendClass
+    }
 };
