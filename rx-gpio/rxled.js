@@ -34,7 +34,7 @@ var RxLed = Class.extend(RxGpio,
     // static members
     {
         create: function(gpio, onVal, edge) {
-            onVal = onVal === undefined ? 1 : +!!onVal;
+            onVal = +(onVal === 1);
             return new RxLed(gpio, onVal, edge);
         }
     }
