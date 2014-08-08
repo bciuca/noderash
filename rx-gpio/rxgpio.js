@@ -10,12 +10,13 @@ var RxGpio = Class.define(
     function RxGpio(gpio, direction, edge, options) {
         this._gpio = new Gpio(gpio, direction, edge, options);
         this._disposed = new Rx.Subject();
+        this._unwatch = new Rx.Subject();
     },
 
     // prototype members
     {
         read: function() {
-            return utils.rxify(this._gpio.read), this._gpio;
+            return utils.rxify(this._gpio.read, this._gpio, true);
         },
 
         write: function(val) {
@@ -25,12 +26,21 @@ var RxGpio = Class.define(
         watch: function() {
             return utils.rxify(this._gpio.watch, this._gpio, false)
                 .throttle(10) // avoids reading a pin too quickly
-                .takeUntil(this._disposed);
+                .takeUntil(this._disposed)
+                .takeUntil(this._unwatch);
+        },
+
+        unwatch: function() {
+            this._unwatch.onNext();
         },
 
         destroy: function() {
             this._disposed.onNext();
             this._gpio.unwatchAll();
+
+            this._gpio = null;
+            this._disposed = null;
+            this._unwatch = null;
         }
     },
 
