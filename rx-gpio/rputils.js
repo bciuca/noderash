@@ -156,17 +156,31 @@ function getGpioLib() {
         : require('../test/gpio-stub').stub;
 }
 
+
 function defineClass(constructor, prototypeMembers, staticMembers) {
-    constructor.prototype = prototypeMembers;
-    _.extend(constructor, staticMembers);
+    if (prototypeMembers) {
+        _.extend(constructor.prototype, prototypeMembers);
+    }
+
+    if (staticMembers) {
+        _.extend(constructor, staticMembers);
+    }
+
     return constructor;
 }
 
-function extendClass(baseClass, baseClassArgs, constructor, prototypeMembers, staticMembers) {
-    baseClassArgs = baseClassArgs || [];
-    constructor.prototype = new baseClass.bind.apply(baseClass, baseClassArgs);
-    _.extend(constructor.prototype, prototypeMembers);
-    _.extend(constructor, staticMembers);
+function extendClass(baseClass, constructor, prototypeMembers, staticMembers) {
+    constructor = constructor || function () { };
+    constructor.prototype = Object.create(baseClass.prototype);
+
+    if (prototypeMembers) {
+        _.extend(constructor.prototype, prototypeMembers);
+    }
+
+    if (staticMembers) {
+        _.extend(constructor, staticMembers);
+    }
+
     return constructor;
 }
 
