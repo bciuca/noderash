@@ -5,10 +5,10 @@ var RxGpio = require('./rxgpio'),
     utils = require('./rputils'),
     Class = utils.Class;
 
-var RxLed = Class.extend(RxGpio, [],
+var RxLed = Class.extend(RxGpio,
     // Constructor
     function RxLed(gpio, onValue, edge) {
-        
+        RxGpio.call(this, gpio, 'out', edge);
         this._onValue = onValue;
         this._offValue = +!onValue;
     },
@@ -27,13 +27,16 @@ var RxLed = Class.extend(RxGpio, [],
             return this.read()
                 .flatMap(function(val) {
                     return this.write(+!val);
-                }.bind(this))
+                }.bind(this));
         }
     },
 
     // static members
     {
-
+        create: function(gpio, onVal, edge) {
+            onVal = onVal === undefined ? 1 : +!!onVal;
+            return new RxLed(gpio, onVal, edge);
+        }
     }
 );
 
